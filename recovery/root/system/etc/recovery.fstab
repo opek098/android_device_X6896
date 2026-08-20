@@ -1,0 +1,20 @@
+#/system/core/fs_mgr/libfstab/fstab.cpp
+#device    mount_point           fs_type     mount_flag                                                 fsmgr_flag
+rootfs     /                     rootfs      rw,seclabel                                                defaults
+proc       /proc                 proc        rw,nosuid,noexec,relatime                                  defaults
+tmpfs      /dev                  tmpfs       rw,seclabel,nosuid,relatime,mode=755                       defaults
+devpts     /dev/pts              devpts      rw,seclabel,relatime,mode=600,ptmxmode=000                 defaults
+proc       /proc                 proc        rw,relatime,gid=3009,hidepid=invisible                     defaults
+sysfs      /sys                  sysfs       rw,seclabel,relatime                                       defaults
+selinuxfs  /sys/fs/selinux       selinuxfs   rw,relatime                                                defaults
+tmpfs      /mnt                  tmpfs       rw,seclabel,nosuid,nodev,noexec,relatime,mode=755,gid=1000 defaults
+tmpfs      /apex                 tmpfs       rw,seclabel,nosuid,nodev,noexec,relatime,mode=755          defaults
+tmpfs      /linkerconfig         tmpfs       rw,seclabel,nosuid,nodev,noexec,relatime,mode=755          defaults
+tmpfs      /mnt/installer        tmpfs       rw,seclabel,nosuid,nodev,noexec,relatime,mode=755,gid=1000 defaults
+tmpfs      /mnt/androidwritable  tmpfs       rw,seclabel,nosuid,nodev,noexec,relatime,mode=755,gid=1000 defaults
+none       /sys/fs/cgroup        cgroup2     rw,nosuid,nodev,noexec,relatime,memory_recursiveprot       defaults
+tmpfs      /tmp                  tmpfs       rw,seclabel,relatime                                       defaults
+binder     /dev/binderfs         binder      rw,relatime,max=1048576,stats=global                       defaults
+none       /config               configfs    rw,relatime                                                defaults
+adb        /dev/usb-ffs/adb      functionfs  rw,relatime                                                defaults
+fastboot   /dev/usb-ffs/fastboot functionfs  rw,relatime                                                defaults
