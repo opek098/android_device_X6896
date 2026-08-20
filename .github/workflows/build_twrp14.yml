@@ -1,0 +1,99 @@
+name: Build TWRP 14.1
+
+on:
+  workflow_dispatch:
+    inputs:
+      MANIFEST_URL:
+        description: 'TWRP Manifest URL'
+        required: true
+        default: 'https://github.com/minimal-manifest-twrp/platform_manifest_twrp_aosp'
+      MANIFEST_BRANCH:
+        description: 'TWRP Branch'
+        required: true
+        default: 'twrp-14.1'
+      DEVICE_TREE_URL:
+        description: 'Device Tree Repository URL'
+        required: true
+        default: 'https://github.com/username/device_transsion_X6896'
+      DEVICE_TREE_BRANCH:
+        description: 'Device Tree Branch'
+        required: true
+        default: 'android-14'
+      DEVICE_PATH:
+        description: 'Device Path'
+        required: true
+        default: 'device/transsion/X6896'
+      DEVICE_NAME:
+        description: 'Device Target Name (e.g. twrp_X6896)'
+        required: true
+        default: 'twrp_X6896'
+      BUILD_TARGET:
+        description: 'Build Target (vendor_bootimage / recoveryimage / bootimage)'
+        required: true
+        default: 'vendor_bootimage'
+
+jobs:
+  build:
+    runs-on: ubuntu-22.04
+    steps:
+    - name: Maximize Build Space
+      uses: easimon/maximize-build-space@master
+      with:
+        root-reserve-mb: 2048
+        swap-size-mb: 1024
+        remove-dotnet: 'true'
+        remove-android: 'true'
+        remove-haskell: 'true'
+        remove-codeql: 'true'
+
+    - name: Checkout Repository
+      uses: actions/checkout@v4
+
+    - name: Set up Build Environment
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y \
+          gperf gcc-multilib g++-multilib libc6-dev lib32ncurses5-dev \
+          x11proto-core-dev libx11-dev lib32z1-dev libgl1-mesa-dev \
+          libxml2-utils xsltproc bc ccache devscripts libssl-dev \
+          libffi-dev libncurses5 zip unzip rsync curl git p7zip-full \
+          python3 python3-pip python-is-python3 repo
+
+    - name: Configure Git
+      run: |
+        git config --global user.name "opek098"
+        git config --global user.email "ilyasmuhamadilya@example.com"
+
+    - name: Sync TWRP Source
+      run: |
+        mkdir workspace
+        cd workspace
+        repo init -u ${{ github.event.inputs.MANIFEST_URL }} -b ${{ github.event.inputs.MANIFEST_BRANCH }} --depth=1
+        repo sync -c -j$(nproc --all) --force-sync --no-clone-bundle --no-tags
+
+    - name: Clone Device Tree
+      run: |
+        cd workspace
+        git clone ${{ github.event.inputs.DEVICE_TREE_URL }} -b ${{ github.event.inputs.DEVICE_TREE_BRANCH }} ${{ github.event.inputs.DEVICE_PATH }}
+
+    - name: Build TWRP
+      run: |
+        cd workspace
+        export ALLOW_MISSING_DEPENDENCIES=true
+        export LC_ALL=C
+        source build/envsetup.sh
+        
+        # Eksekusi lunch combo
+        lunch ${{ github.event.inputs.DEVICE_NAME }}-eng || lunch ${{ github.event.inputs.DEVICE_NAME }}-userdebug
+
+        make clean
+        make ${{ github.event.inputs.BUILD_TARGET }} -j$(nproc --all)
+
+    - name: Upload Recovery Artifacts
+      uses: actions/upload-artifact@v4
+      with:
+        name: TWRP_14.1_${{ github.event.inputs.DEVICE_NAME }}
+        path: |
+          workspace/out/target/product/*/*.img
+          workspace/out/target/product/*/*.zip
+          
