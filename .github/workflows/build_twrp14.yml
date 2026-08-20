@@ -14,11 +14,11 @@ on:
       DEVICE_TREE_URL:
         description: 'Device Tree Repository URL'
         required: true
-        default: 'https://github.com/username/device_transsion_X6896'
+        default: 'https://github.com/opek098/android_device_X6896'
       DEVICE_TREE_BRANCH:
         description: 'Device Tree Branch'
         required: true
-        default: 'twrp-16.0'
+        default: 'android-14'
       DEVICE_PATH:
         description: 'Device Path'
         required: true
@@ -28,31 +28,33 @@ on:
         required: true
         default: 'twrp_X6896'
       BUILD_TARGET:
-        description: 'Build Target (vendor_bootimage / recoveryimage / bootimage)'
+        description: 'Build Target (vendorboot / recovery / boot)'
         required: true
-        default: 'vendor_bootimage'
+        default: 'vendorboot'
 
 jobs:
   build:
     runs-on: ubuntu-22.04
     steps:
-    - name: Maximize Build Space
-      uses: easimon/maximize-build-space@master
-      with:
-        root-reserve-mb: 2048
-        swap-size-mb: 1024
-        remove-dotnet: 'true'
-        remove-android: 'true'
-        remove-haskell: 'true'
-        remove-codeql: 'true'
+    - name: Free Disk Space (Manual Cleanup)
+      run: |
+        sudo rm -rf /usr/share/dotnet
+        sudo rm -rf /usr/local/lib/android
+        sudo rm -rf /opt/ghc
+        sudo rm -rf /opt/hostedtoolcache/CodeQL
+        sudo docker image prune -a -f
+        echo "Disk space after cleanup:"
+        df -h
 
     - name: Checkout Repository
       uses: actions/checkout@v4
 
     - name: Set up Build Environment
       run: |
-        sudo apt-get update
-        sudo apt-get install -y \
+        export DEBIAN_FRONTEND=noninteractive
+        sudo apt-get clean
+        sudo apt-get update -qq
+        sudo apt-get install -y --no-install-recommends \
           gperf gcc-multilib g++-multilib libc6-dev lib32ncurses5-dev \
           x11proto-core-dev libx11-dev lib32z1-dev libgl1-mesa-dev \
           libxml2-utils xsltproc bc ccache devscripts libssl-dev \
@@ -61,8 +63,8 @@ jobs:
 
     - name: Configure Git
       run: |
-        git config --global user.name "opek098"
-        git config --global user.email "ilyasmuhamadilya@example.com"
+        git config --global user.name "Opek X Furina"
+        git config --global user.email "developer@local"
 
     - name: Sync TWRP Source
       run: |
@@ -83,8 +85,8 @@ jobs:
         export LC_ALL=C
         source build/envsetup.sh
         
-        # Eksekusi lunch combo
-        lunch ${{ github.event.inputs.DEVICE_NAME }}-eng || lunch ${{ github.event.inputs.DEVICE_NAME }}-userdebug
+        # Eksekusi lunch combo dengan fallback format Android 14
+        lunch ${{ github.event.inputs.DEVICE_NAME }}-ap2a-eng || lunch ${{ github.event.inputs.DEVICE_NAME }}-eng || lunch ${{ github.event.inputs.DEVICE_NAME }}-userdebug
 
         make clean
         make ${{ github.event.inputs.BUILD_TARGET }} -j$(nproc --all)
@@ -96,4 +98,3 @@ jobs:
         path: |
           workspace/out/target/product/*/*.img
           workspace/out/target/product/*/*.zip
-          
