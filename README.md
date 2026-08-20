@@ -5,7 +5,7 @@
 
 - Device: Infinix HOT 70
 - Board: Infinix-X6896
-- Platform: Mediatek
+- Platform: Mediatek Helio G100
 - Android version: 36
 
 ## Features
